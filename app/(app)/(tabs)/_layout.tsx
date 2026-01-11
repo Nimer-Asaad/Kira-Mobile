@@ -1,18 +1,18 @@
-import { Redirect, Tabs } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Redirect, Tabs } from "expo-router";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAuth } from '../../../src/auth/AuthContext';
-import { useUnreadCount } from '../../../src/hooks/useUnreadCount';
-import { COLORS } from '../../../src/utils/constants';
+import { HapticTab } from "@/components/haptic-tab";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAuth } from "../../../src/auth/AuthContext";
+import { useUnreadCount } from "../../../src/hooks/useUnreadCount";
+import { COLORS } from "../../../src/utils/constants";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { unreadCount } = useUnreadCount(true);
 
   // If not authenticated, redirect to login
@@ -20,19 +20,37 @@ export default function TabLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
+  const isTrainee = user?.role === "trainee";
+  const isHrOrAdmin = user?.role === "hr" || user?.role === "admin";
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+      }}
+    >
       {/* Tasks Tab - with stack for task details */}
       <Tabs.Screen
         name="tasks"
         options={{
-          title: 'Tasks',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="checklist" color={color} />,
+          title: "Tasks",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="checklist" color={color} />
+          ),
+        }}
+      />
+
+      {/* Trainee Dashboard Tab - only for trainee role */}
+      <Tabs.Screen
+        name="trainee"
+        options={{
+          title: "Training",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="chart.bar.fill" color={color} />
+          ),
+          href: isTrainee ? "/(app)/(tabs)/trainee" : null,
         }}
       />
 
@@ -40,13 +58,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chat"
         options={{
-          title: 'Chat',
+          title: "Chat",
           tabBarIcon: ({ color }) => (
             <View>
               <IconSymbol size={28} name="message.fill" color={color} />
               {unreadCount > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Text>
                 </View>
               )}
             </View>
@@ -54,21 +74,26 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Calendar Tab - placeholder */}
+      {/* Calendar Tab */}
       <Tabs.Screen
         name="calendar"
         options={{
-          title: 'Calendar',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+          title: "Calendar",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="calendar" color={color} />
+          ),
         }}
       />
 
-      {/* Inbox Tab - placeholder */}
+      {/* Inbox Tab - only for HR/Admin */}
       <Tabs.Screen
         name="inbox"
         options={{
-          title: 'Inbox',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="envelope.fill" color={color} />,
+          title: "Inbox",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="envelope.fill" color={color} />
+          ),
+          href: isHrOrAdmin ? "/(app)/(tabs)/inbox" : null,
         }}
       />
 
@@ -76,8 +101,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle.fill" color={color} />,
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.circle.fill" color={color} />
+          ),
         }}
       />
     </Tabs>
@@ -86,19 +113,19 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   badge: {
-    position: 'absolute',
+    position: "absolute",
     top: -8,
     right: -8,
     backgroundColor: COLORS.primary,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   badgeText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

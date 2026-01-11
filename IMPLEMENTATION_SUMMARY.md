@@ -1,262 +1,221 @@
-# 🎉 Kira Mobile Implementation Complete!
+# Mobile App Implementation Summary
 
-## ✅ What's Been Built
+## 🎯 Quick Overview
 
-A complete, production-ready mobile companion app for the Kira Task Management System.
-
-### 📱 Implemented Screens
-
-#### Authentication Flow
-- [app/(auth)/login.tsx](app/(auth)/login.tsx) - Email/password login
-- [app/(auth)/signup.tsx](app/(auth)/signup.tsx) - User registration
-- Auto-redirect based on authentication state
-- JWT token persistence with SecureStore
-
-#### Main Application (Tabs)
-- [app/(tabs)/index.tsx](app/(tabs)/index.tsx) - **Tasks List** (pull-to-refresh, status badges)
-- [app/(tabs)/personal.tsx](app/(tabs)/personal.tsx) - **Personal Hub** (placeholder for future features)
-- [app/(tabs)/chat.tsx](app/(tabs)/chat.tsx) - **Chat Conversations** (unread badges, last message)
-- [app/(tabs)/profile.tsx](app/(tabs)/profile.tsx) - **User Profile** (settings, logout)
-
-#### Detail Screens
-- [app/task/[id].tsx](app/task/[id].tsx) - **Task Details** (status updates, checklist management)
-- [app/chat/[userId].tsx](app/chat/[userId].tsx) - **Chat Conversation** (send/receive messages)
-
-### 🏗️ Architecture
-
-#### API Layer ([src/api/](src/api/))
-- **[client.ts](src/api/client.ts)** - Axios instance with JWT interceptor, auto-logout on 401
-- **[auth.ts](src/api/auth.ts)** - Login, signup, getMe, updateMe
-- **[tasks.ts](src/api/tasks.ts)** - Get tasks, update status, manage checklist
-- **[personal.ts](src/api/personal.ts)** - Personal tasks, calendar, planner APIs
-- **[chat.ts](src/api/chat.ts)** - Conversations, send messages, mark as read
-
-#### State Management ([src/store/](src/store/))
-- **[authStore.ts](src/store/authStore.ts)** - Zustand store for authentication
-  - Login/logout/signup actions
-  - Token persistence
-  - Auto-validate on app start
-  - User profile management
-- **[types.ts](src/store/types.ts)** - TypeScript interfaces for all data models
-
-#### Utilities ([src/utils/](src/utils/))
-- **[constants.ts](src/utils/constants.ts)** - App configuration (API URL, colors, storage keys)
-- **[storage.ts](src/utils/storage.ts)** - SecureStore wrapper (iOS Keychain / Android Keystore)
-
-### 🔐 Security Features
-
-✅ JWT tokens stored in SecureStore (iOS Keychain / Android Keystore)  
-✅ Automatic token injection via Axios interceptor  
-✅ Auto-logout on 401 (expired token)  
-✅ Route protection (auth-only screens)  
-✅ Token validation on app startup  
-
-### 🎨 UI/UX Features
-
-✅ Pull-to-refresh on all list screens  
-✅ Loading states with ActivityIndicator  
-✅ Error handling with user-friendly alerts  
-✅ Empty states with helpful messages  
-✅ Color-coded status badges (pending, in-progress, completed)  
-✅ Priority indicators (low, medium, high)  
-✅ Responsive layouts  
-✅ Keyboard-aware inputs  
-
-### 🔌 Backend Integration
-
-All endpoints from Kira-Backend are integrated:
-
-| Feature | Endpoint | Status |
-|---------|----------|--------|
-| Login | `POST /api/auth/login` | ✅ |
-| Signup | `POST /api/auth/signup` | ✅ |
-| Get User | `GET /api/auth/me` | ✅ |
-| Update Profile | `PUT /api/auth/me` | ✅ |
-| My Tasks | `GET /api/tasks/my` | ✅ |
-| Task Details | `GET /api/tasks/:id` | ✅ |
-| Update Status | `PATCH /api/tasks/:id/status` | ✅ |
-| Update Checklist | `PATCH /api/tasks/:id/checklist/:itemId` | ✅ |
-| Conversations | `GET /api/chat/conversations` | ✅ |
-| Messages | `GET /api/chat/conversation/:userModel/:userId` | ✅ |
-| Send Message | `POST /api/chat/send` | ✅ |
-| Mark Read | `POST /api/chat/mark-read` | ✅ |
-| Personal Tasks | `GET /api/personal/tasks` | 🔧 API ready |
-| Calendar | `GET /api/personal/calendar` | 🔧 API ready |
-| Planner | `GET /api/personal/planner` | 🔧 API ready |
-
-## 🚀 How to Run
-
-### 1. Configure Backend URL
-
-Edit [src/utils/constants.ts](src/utils/constants.ts):
-```typescript
-export const API_URL = 'http://YOUR_IP:8000/api';
-```
-
-**For physical device:** Use your computer's local IP (e.g., `192.168.1.100`)  
-**For iOS Simulator:** `http://localhost:8000/api` works  
-**For Android Emulator:** Use `http://10.0.2.2:8000/api`
-
-### 2. Start Backend
-```bash
-cd ../Kira-Backend
-npm start
-```
-
-### 3. Start Mobile App
-```bash
-npm start
-```
-
-Then press:
-- `i` for iOS Simulator
-- `a` for Android Emulator
-- Scan QR code with Expo Go app
-
-## 📊 File Statistics
-
-```
-Total Files Created: 20+
-Lines of Code: ~2,500
-Languages: TypeScript, TSX
-```
-
-### Key Files
-- **Screens**: 9 screens (auth, tabs, detail)
-- **API Services**: 5 API clients
-- **Store**: 1 Zustand store + types
-- **Utils**: 2 utility modules
-- **Documentation**: 3 markdown files
-
-## ✨ Key Features Highlight
-
-### 1. Smart Authentication Flow
-```typescript
-// Auto-redirects based on auth state
-if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
-
-// Token validation on app start
-useEffect(() => {
-  loadUser(); // Checks stored token, validates with backend
-}, []);
-```
-
-### 2. Secure Token Management
-```typescript
-// Automatic JWT injection
-apiClient.interceptors.request.use(async (config) => {
-  const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// Auto-logout on expired token
-if (error.response?.status === 401) {
-  await storage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-}
-```
-
-### 3. Type-Safe API Calls
-```typescript
-// All API responses are typed
-const tasks: Task[] = await tasksApi.getMyTasks();
-const user: User = await authApi.getMe();
-```
-
-## 🚧 Future Enhancements (Ready to Implement)
-
-### High Priority
-- [ ] **Personal Tasks CRUD UI** - API layer already done
-- [ ] **Calendar View** - API layer already done
-- [ ] **Daily Planner UI** - API layer already done
-- [ ] **WebSocket for real-time chat** - Replace polling
-- [ ] **Push Notifications** - Expo Notifications
-
-### Medium Priority
-- [ ] **Offline Support** - AsyncStorage queue for failed requests
-- [ ] **Image Attachments** - Chat & task files
-- [ ] **Task Creation** - Form to create new tasks
-- [ ] **Search & Filters** - Advanced task filtering
-
-### Low Priority
-- [ ] Dark mode
-- [ ] Biometric auth
-- [ ] Custom animations
-- [ ] App icon & splash screen
-
-## 🎯 Testing Checklist
-
-Run through these scenarios:
-
-### Authentication ✓
-- [x] Login with valid credentials
-- [x] Login fails with invalid credentials
-- [x] Signup creates new account
-- [x] Token persists after app restart
-- [x] Auto-logout on token expiration
-
-### Tasks ✓
-- [x] View task list
-- [x] Pull to refresh
-- [x] Open task detail
-- [x] Update task status
-- [x] Toggle checklist items
-- [x] Empty state shown when no tasks
-
-### Chat ✓
-- [x] View conversations
-- [x] Open conversation
-- [x] Send message
-- [x] Messages update (polling every 5s)
-- [x] Unread badge displayed
-
-### Profile ✓
-- [x] View user info
-- [x] Logout confirmation
-- [x] Returns to login screen
-
-## 📚 Code Quality
-
-✅ **TypeScript** - Full type safety  
-✅ **ESLint** - No linting errors  
-✅ **Consistent Naming** - camelCase, PascalCase conventions  
-✅ **Error Handling** - Try-catch with user-friendly messages  
-✅ **Loading States** - All async operations show loading  
-✅ **Empty States** - Helpful messages when no data  
-✅ **Comments** - Key logic documented  
-
-## 🔧 Technical Stack
-
-- **Framework**: Expo SDK 54 + React Native 0.81
-- **Navigation**: Expo Router (file-based)
-- **State**: Zustand (lightweight, no boilerplate)
-- **HTTP Client**: Axios with interceptors
-- **Storage**: expo-secure-store
-- **Language**: TypeScript
-- **Styling**: StyleSheet (inline styles)
-
-## 📖 Documentation
-
-- **[README.md](README.md)** - Project overview & quick start
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed setup & architecture guide
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - This file
-
-## 🎉 Ready for Production
-
-The app is production-ready with:
-- ✅ Secure authentication
-- ✅ Full backend integration
-- ✅ Error handling
-- ✅ Type safety
-- ✅ Responsive UI
-- ✅ Clean architecture
-
-### Next Steps:
-1. Test all features with real backend
-2. Implement remaining Personal features (UI only needed, API ready)
-3. Add push notifications
-4. Build for App Store / Play Store
+Your **Web Frontend** has extensive features across multiple modes (Company/Personal) and roles (Admin/HR/User/Trainee). The **Mobile App** currently only has basic task viewing and chat functionality.
 
 ---
 
-**Built with ❤️ for the Kira Task Management System**
+## 🔴 CRITICAL MISSING FEATURES (Must Implement)
+
+### 1. **Mode Selection** ⭐ TOP PRIORITY
+
+- **What**: Landing page to choose "Company" or "Personal" mode
+- **Web File**: `src/pages/Landing/ChooseMode.jsx`
+- **Mobile Action**: Create `app/(onboarding)/choose-mode.tsx`
+
+### 2. **Personal Mode Features** (5 major features)
+
+- ✅ **Dashboard** - Stats, charts, recent tasks
+- ✅ **Tasks** - Full CRUD with filters (currently only basic list)
+- ✅ **Calendar** - Event management (currently placeholder)
+- ✅ **Planner** - Daily time blocks (completely missing)
+- ✅ **Inbox** - Gmail integration (currently placeholder)
+
+### 3. **Admin Features** (3 major features)
+
+- ✅ **Dashboard** - Admin statistics
+- ✅ **Task Management** - Create, assign, manage all tasks
+- ✅ **User Management** - Create, edit, delete users
+
+### 4. **HR Features** (4 major features)
+
+- ✅ **Dashboard** - Trainee statistics
+- ✅ **Applicants** - Manage job applicants
+- ✅ **Inbox** - HR Gmail integration
+- ✅ **Trainees** - Manage trainee lifecycle
+
+---
+
+## 📊 Feature Status
+
+| Category              | Web     | Mobile              | Gap           |
+| --------------------- | ------- | ------------------- | ------------- |
+| **Personal Features** | 7 pages | 1 page (tasks only) | **6 missing** |
+| **Admin Features**    | 5 pages | 0 pages             | **5 missing** |
+| **HR Features**       | 4 pages | 0 pages             | **4 missing** |
+| **User Features**     | 2 pages | 0 pages             | **2 missing** |
+| **Trainee Features**  | 3 pages | 0 pages             | **3 missing** |
+| **Shared Features**   | 3 pages | 2 pages (partial)   | **1 missing** |
+
+**Total**: Web has **24 pages**, Mobile has **3 pages** (2 partial) = **21 pages missing**
+
+---
+
+## 🚀 Implementation Order
+
+### **Week 1: Foundation**
+
+1. Mode Selection System
+2. Personal Dashboard
+3. Enhanced Personal Tasks
+
+### **Week 2: Personal Features**
+
+4. Personal Calendar
+5. Personal Planner
+6. Personal Inbox (Gmail)
+
+### **Week 3: Admin Features**
+
+7. Admin Dashboard
+8. Admin Task Management
+9. Admin User Management
+
+### **Week 4: HR Features**
+
+10. HR Dashboard
+11. HR Applicants
+12. HR Inbox
+13. HR Trainees
+
+### **Week 5: Supporting Features**
+
+14. User Dashboard
+15. Trainee Dashboard & Tasks
+16. Enhanced Profile & Settings
+
+---
+
+## 📦 Required Dependencies
+
+```bash
+npm install react-native-chart-kit victory-native react-native-calendars moment
+```
+
+---
+
+## 🔌 API Coverage
+
+**Current Mobile API**: ~15 endpoints  
+**Web Frontend API**: ~80 endpoints  
+**Missing**: ~65 endpoints
+
+**Key Missing API Categories:**
+
+- Personal Gmail endpoints (8 endpoints)
+- Personal Calendar endpoints (5 endpoints)
+- Personal Planner endpoints (3 endpoints)
+- Admin endpoints (10 endpoints)
+- HR endpoints (20 endpoints)
+- Trainee endpoints (5 endpoints)
+
+---
+
+## 📱 Navigation Changes Needed
+
+**Current Structure:**
+
+```
+(app)/(tabs)
+  ├── tasks
+  ├── chat ✅
+  ├── calendar (placeholder)
+  ├── inbox (placeholder)
+  └── profile (basic)
+```
+
+**Required Structure:**
+
+```
+(app)
+  ├── (onboarding)/choose-mode ⭐ NEW
+  ├── (tabs)
+  │   ├── personal/
+  │   │   ├── dashboard ⭐ NEW
+  │   │   ├── tasks (enhance)
+  │   │   ├── planner ⭐ NEW
+  │   │   ├── calendar ⭐ NEW
+  │   │   └── inbox ⭐ NEW
+  │   ├── admin/ ⭐ NEW
+  │   ├── hr/ ⭐ NEW
+  │   ├── user/ ⭐ NEW
+  │   └── trainee/ ⭐ NEW
+  └── settings ⭐ NEW
+```
+
+---
+
+## 🎨 Context Providers Needed
+
+1. **ModeContext** ⭐ CRITICAL - Store selected mode (company/personal)
+2. **ThemeContext** - Dark/light mode, language
+3. **AssistantContext** - Global assistant state
+
+---
+
+## 📝 Key Files to Reference
+
+### Web Frontend (Reference)
+
+- `src/App.jsx` - Complete routing structure
+- `src/pages/Personal/*` - All personal pages
+- `src/pages/Admin/*` - All admin pages
+- `src/pages/HR/*` - All HR pages
+- `src/utils/apiPaths.js` - Complete API endpoints
+
+### Mobile App (Update)
+
+- `app/_layout.tsx` - Add mode selection logic
+- `src/api/apiPaths.ts` - Add missing endpoints
+- `src/context/` - Add ModeContext, ThemeContext
+
+---
+
+## ✅ Quick Wins (Start Here)
+
+1. **Mode Selection** - 1 day
+
+   - Create ChooseMode screen
+   - Add ModeContext
+   - Update navigation
+
+2. **Personal Dashboard** - 2 days
+
+   - Stats cards
+   - Charts
+   - Recent tasks
+
+3. **Enhanced Tasks** - 2 days
+   - Add filters
+   - Add create/edit
+   - Improve detail view
+
+---
+
+## 🎯 Success Criteria
+
+Mobile app will match web frontend when:
+
+- ✅ All 24 pages implemented
+- ✅ Mode selection works
+- ✅ Role-based navigation works
+- ✅ All API endpoints integrated
+- ✅ Dark mode & language support
+- ✅ Responsive design
+
+---
+
+## 📞 Next Steps
+
+1. **Read** `MOBILE_WEB_COMPARISON.md` for detailed feature breakdown
+2. **Start** with Mode Selection (foundation)
+3. **Implement** Personal features first (most used)
+4. **Add** Admin/HR features based on user needs
+5. **Test** each feature as you build
+
+---
+
+**Estimated Total Implementation Time**: 4-6 weeks (depending on team size)
+
+**Priority**: Start with Mode Selection → Personal Features → Admin/HR Features

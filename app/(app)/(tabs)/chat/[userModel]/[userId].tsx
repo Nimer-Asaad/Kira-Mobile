@@ -1,33 +1,38 @@
-import { useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { chatApi } from '../../../../../src/api/chat';
-import { getErrorMessage } from '../../../../../src/api/client';
-import { Message } from '../../../../../src/api/types';
-import { useAuth } from '../../../../../src/auth/AuthContext';
-import { MessageBubble } from '../../../../../src/components/MessageBubble';
-import { COLORS } from '../../../../../src/utils/constants';
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { chatApi } from "../../../../../src/api/chat";
+import { getErrorMessage } from "../../../../../src/api/client";
+import { Message } from "../../../../../src/api/types";
+import { useAuth } from "../../../../../src/auth/AuthContext";
+import { MessageBubble } from "../../../../../src/components/MessageBubble";
+import { COLORS } from "../../../../../src/utils/constants";
 
 export default function ChatConversationScreen() {
-  const { userModel, userId } = useLocalSearchParams<{ userModel: string; userId: string }>();
+  const { userModel, userId } = useLocalSearchParams<{
+    userModel: string;
+    userId: string;
+  }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const flatListRef = useRef<FlatList>(null);
   const { user: currentUser } = useAuth();
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
 
   const loadMessages = async () => {
     if (!userId || !userModel) return;
@@ -36,19 +41,29 @@ export default function ChatConversationScreen() {
       const data = await chatApi.getConversation(userModel, userId);
       setMessages(data.reverse()); // Reverse to show oldest at top
     } catch (error) {
-      console.error('Failed to load messages:', getErrorMessage(error));
+      console.error("Failed to load messages:", getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   };
 
   const markAsRead = async () => {
-    if (!userId || !userModel) return;
+    if (!userId || !userModel || !currentUser) return;
 
     try {
-      await chatApi.markAsRead(userModel, userId);
+      // Get unread messages from the other user
+      const unreadMessageIds = messages
+        .filter(
+          (msg) =>
+            msg.receiver._id === currentUser._id && !msg.isRead && !msg.read
+        )
+        .map((msg) => msg._id);
+
+      if (unreadMessageIds.length > 0) {
+        await chatApi.markAsRead(unreadMessageIds);
+      }
     } catch (error) {
-      console.error('Failed to mark as read:', getErrorMessage(error));
+      console.error("Failed to mark as read:", getErrorMessage(error));
     }
   };
 
@@ -78,11 +93,15 @@ export default function ChatConversationScreen() {
     if (!inputText.trim() || sending || !userId || !userModel) return;
 
     const messageText = inputText.trim();
-    setInputText('');
+    setInputText("");
     setSending(true);
 
     try {
-      const newMessage = await chatApi.sendMessage(userModel, userId, messageText);
+      const newMessage = await chatApi.sendMessage(
+        userModel,
+        userId,
+        messageText
+      );
       setMessages((prev) => [...prev, newMessage]);
 
       // Scroll to bottom
@@ -90,9 +109,9 @@ export default function ChatConversationScreen() {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error) {
-      console.error('Failed to send message:', getErrorMessage(error));
+      console.error("Failed to send message:", getErrorMessage(error));
       setInputText(messageText); // Restore text on error
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      Alert.alert("Error", "Failed to send message. Please try again.");
     } finally {
       setSending(false);
     }
@@ -114,8 +133,8 @@ export default function ChatConversationScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
       <FlatList
         ref={flatListRef}
@@ -123,7 +142,9 @@ export default function ChatConversationScreen() {
         keyExtractor={(item) => item._id}
         renderItem={renderMessage}
         contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() =>
+          flatListRef.current?.scrollToEnd({ animated: true })
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No messages yet</Text>
@@ -144,7 +165,10 @@ export default function ChatConversationScreen() {
           editable={!sending}
         />
         <TouchableOpacity
-          style={[styles.sendButton, (!inputText.trim() || sending) && styles.sendButtonDisabled]}
+          style={[
+            styles.sendButton,
+            (!inputText.trim() || sending) && styles.sendButtonDisabled,
+          ]}
           onPress={handleSend}
           disabled={!inputText.trim() || sending}
         >
@@ -166,16 +190,16 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   messagesList: {
     padding: 16,
     paddingBottom: 8,
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingTop: 60,
   },
   emptyText: {
@@ -188,12 +212,12 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   inputContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   input: {
     flex: 1,
@@ -211,16 +235,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     minWidth: 60,
   },
   sendButtonDisabled: {
     opacity: 0.5,
   },
   sendButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 15,
   },
 });

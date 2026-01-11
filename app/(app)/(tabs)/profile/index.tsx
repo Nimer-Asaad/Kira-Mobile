@@ -1,15 +1,15 @@
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useRouter } from "expo-router";
+import React from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { useAuth } from '../../../../src/auth/AuthContext';
-import { COLORS } from '../../../../src/utils/constants';
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useAuth } from "../../../../src/auth/AuthContext";
+import { COLORS } from "../../../../src/utils/constants";
 
 export default function ProfileScreen() {
   const { user, logout, isLoading } = useAuth();
@@ -17,11 +17,14 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/(auth)/login');
+    router.replace("/(auth)/login");
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+    >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
@@ -33,15 +36,15 @@ export default function ProfileScreen() {
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {user?.name?.charAt(0).toUpperCase() || '?'}
+              {user?.name?.charAt(0).toUpperCase() || "?"}
             </Text>
           </View>
         </View>
 
         {/* Name and Email */}
         <View style={styles.infoSection}>
-          <Text style={styles.name}>{user?.name || 'User'}</Text>
-          <Text style={styles.email}>{user?.email || 'No email'}</Text>
+          <Text style={styles.name}>{user?.name || "User"}</Text>
+          <Text style={styles.email}>{user?.email || "No email"}</Text>
           {user?.role && (
             <View style={styles.roleBadge}>
               <Text style={styles.roleText}>{user.role.toUpperCase()}</Text>
@@ -53,6 +56,16 @@ export default function ProfileScreen() {
       {/* Profile Settings */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account Settings</Text>
+
+        {(user?.role === "admin" || user?.role === "hr") && (
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => router.push("/(app)/(tabs)/team" as any)}
+          >
+            <Text style={styles.settingLabel}>Team Members</Text>
+            <Text style={styles.settingArrow}>›</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity style={styles.settingRow}>
           <Text style={styles.settingLabel}>Edit Profile</Text>
@@ -122,7 +135,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
     paddingTop: 60,
     borderBottomWidth: 1,
@@ -130,13 +143,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.text,
   },
   profileSection: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingVertical: 24,
-    alignItems: 'center',
+    alignItems: "center",
     borderBottomWidth: 8,
     borderBottomColor: COLORS.backgroundDark,
   },
@@ -148,20 +161,20 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   infoSection: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   name: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.text,
     marginBottom: 4,
   },
@@ -177,29 +190,29 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   roleText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginTop: 8,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.textSecondary,
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -208,7 +221,7 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 15,
     color: COLORS.text,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   settingArrow: {
     fontSize: 18,
@@ -220,16 +233,16 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingVertical: 14,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   logoutButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   version: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 16,

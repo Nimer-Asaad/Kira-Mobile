@@ -1,24 +1,35 @@
-import { useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Conversation } from '../api/types';
-import { COLORS } from '../utils/constants';
+import { useRouter } from "expo-router";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Conversation } from "../api/types";
+import { COLORS } from "../utils/constants";
 
 interface ConversationCardProps {
   conversation: Conversation;
 }
 
-export const ConversationCard: React.FC<ConversationCardProps> = ({ conversation }) => {
+export const ConversationCard: React.FC<ConversationCardProps> = ({
+  conversation,
+}) => {
   const router = useRouter();
 
   const handlePress = () => {
     // Navigate with userModel and userId
-    router.push(`/chat/${conversation.user.model}/${conversation.user._id}`);
+    const userModel =
+      conversation.userModel ||
+      conversation.user.userModel ||
+      conversation.user.model ||
+      "User";
+    router.push(
+      `/(app)/(tabs)/chat/${userModel}/${conversation.user._id}` as any
+    );
   };
 
-  const formattedTime = new Date(conversation.lastMessage.createdAt).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
+  const formattedTime = new Date(
+    conversation.lastMessage.createdAt
+  ).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   return (
@@ -26,7 +37,9 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ conversation
       {/* Avatar */}
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>
-          {conversation.user.name.charAt(0).toUpperCase()}
+          {(conversation.user.fullName || conversation.user.name || "U")
+            .charAt(0)
+            .toUpperCase()}
         </Text>
       </View>
 
@@ -35,7 +48,7 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ conversation
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.userName} numberOfLines={1}>
-            {conversation.user.name}
+            {conversation.user.fullName || conversation.user.name || "User"}
           </Text>
           {conversation.unreadCount > 0 && (
             <View style={styles.unreadBadge}>
@@ -58,45 +71,45 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({ conversation
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    alignItems: 'center',
+    alignItems: "center",
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
     backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
     flexShrink: 0,
   },
   avatarText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   content: {
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   userName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.text,
     flex: 1,
   },
@@ -108,9 +121,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   unreadText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   lastMessage: {
     fontSize: 14,

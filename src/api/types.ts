@@ -1,9 +1,10 @@
 // User types
 export interface User {
   _id: string;
-  name: string;
+  name?: string;
+  fullName?: string;
   email: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin" | "hr" | "trainee";
   avatar?: string;
   createdAt: string;
 }
@@ -30,8 +31,8 @@ export interface Task {
   _id: string;
   title: string;
   description?: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  priority?: 'low' | 'medium' | 'high';
+  status: "pending" | "in-progress" | "completed";
+  priority?: "low" | "medium" | "high";
   dueDate?: string;
   assignedTo?: User;
   assignedBy?: User;
@@ -52,7 +53,7 @@ export interface PersonalTask {
   title: string;
   description?: string;
   completed: boolean;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: "low" | "medium" | "high";
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
@@ -63,9 +64,13 @@ export interface CalendarEvent {
   _id: string;
   title: string;
   description?: string;
-  startTime: string;
-  endTime: string;
+  start: string;
+  end: string;
+  startTime?: string;
+  endTime?: string;
   location?: string;
+  color?: string;
+  allDay?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -91,29 +96,38 @@ export interface Message {
   _id: string;
   sender: {
     _id: string;
-    name: string;
+    fullName?: string;
+    name?: string;
+    email?: string;
     avatar?: string;
-    model: 'User' | 'Admin';
+    role?: string;
   };
   receiver: {
     _id: string;
-    name: string;
+    fullName?: string;
+    name?: string;
+    email?: string;
     avatar?: string;
-    model: 'User' | 'Admin';
+    role?: string;
   };
   content: string;
-  read: boolean;
+  isRead?: boolean;
+  read?: boolean;
   createdAt: string;
 }
 
 export interface Conversation {
   user: {
     _id: string;
-    name: string;
+    fullName?: string;
+    name?: string;
     email: string;
     avatar?: string;
-    model: 'User' | 'Admin';
+    userModel?: string;
+    model?: string;
+    role?: string;
   };
+  userModel?: string;
   lastMessage: Message;
   unreadCount: number;
 }

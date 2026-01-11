@@ -1,12 +1,15 @@
-import { Redirect, Stack } from 'expo-router';
-import { useAuth } from '../../src/auth/AuthContext';
+import { Redirect, Stack } from "expo-router";
+import { useAuth } from "../../src/auth/AuthContext";
+import { useMode } from "../../src/context/ModeContext";
 
 export default function AuthLayout() {
   const { isAuthenticated } = useAuth();
+  const { mode } = useMode();
 
-  // If authenticated, redirect to tabs
-  if (isAuthenticated) {
-    return <Redirect href="/(tabs)" />;
+  // If authenticated and has mode, redirect to app tabs
+  // Otherwise, root layout will handle showing onboarding
+  if (isAuthenticated && mode) {
+    return <Redirect href={"/(app)/(tabs)/tasks" as any} />;
   }
 
   return (
