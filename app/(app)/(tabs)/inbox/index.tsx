@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -30,35 +30,89 @@ export default function InboxScreen() {
   const [page, setPage] = useState(1);
   const [totalEmails, setTotalEmails] = useState(0);
   const limit = 20;
+  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    isMountedRef.current = true;
     checkGmailStatus();
+    
+    return () => {
+      isMountedRef.current = false;
+      // Cancel any ongoing requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      // Clear search timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
-    if (gmailStatus?.status === "connected") {
-      fetchEmails();
+    if (gmailStatus?.status === "connected" && isMountedRef.current) {
+      // Debounce search queries
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      searchTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          fetchEmails();
+        }
+      }, searchQuery ? 500 : 0); // 500ms delay for search, immediate for other changes
     }
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, [gmailStatus, label, searchQuery, page]);
 
   const checkGmailStatus = async () => {
     try {
+      if (!isMountedRef.current) return;
+      
       setLoading(true);
       const status = await inboxApi.getStatus();
+      
+      if (!isMountedRef.current) return;
+      
       setGmailStatus(status);
-    } catch (error) {
+    } catch (error: any) {
+      // Don't show alert if component is unmounted or request was aborted
+      if (!isMountedRef.current || error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+        return;
+      }
       console.error("Failed to check Gmail status:", getErrorMessage(error));
-      setGmailStatus({
-        status: "not_connected",
-        message: "Failed to check Gmail status",
-      });
+      if (isMountedRef.current) {
+        setGmailStatus({
+          status: "not_connected",
+          message: "Failed to check Gmail status",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const fetchEmails = async () => {
+    // Cancel previous request if any
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+    
     try {
+      if (!isMountedRef.current) return;
+      
       setLoading(true);
       const params: any = {
         limit,
@@ -68,14 +122,35 @@ export default function InboxScreen() {
       if (label !== "ALL") params.labelIds = label;
 
       const response = await inboxApi.searchEmails(params);
+      
+      if (!isMountedRef.current) return;
+      
       setEmails(response.emails || []);
       setTotalEmails(response.count || 0);
-    } catch (error) {
-      console.error("Failed to fetch emails:", getErrorMessage(error));
-      Alert.alert("Error", getErrorMessage(error));
+    } catch (error: any) {
+      // Don't show alert if component is unmounted or request was aborted
+      if (!isMountedRef.current || error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+        return;
+      }
+      
+      // Don't show alert for network errors (likely navigation-related)
+      const errorMessage = getErrorMessage(error);
+      const isNetworkError = errorMessage.toLowerCase().includes('network') || 
+                            errorMessage.toLowerCase().includes('timeout') ||
+                            error.code === 'ERR_NETWORK' ||
+                            error.message === 'Network Error';
+      
+      console.error("Failed to fetch emails:", errorMessage);
+      
+      // Only show alert for non-network errors and if component is still mounted
+      if (isMountedRef.current && !isNetworkError) {
+        Alert.alert("Error", errorMessage);
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
