@@ -1,20 +1,22 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
-import { chatApi } from '../../src/api/chat';
-import { getErrorMessage } from '../../src/api/client';
-import { Conversation } from '../../src/api/types';
-import { ConversationCard } from '../../src/components/ConversationCard';
-import { COLORS } from '../../src/utils/constants';
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { chatApi } from "../../src/api/chat";
+import { getErrorMessage } from "../../src/api/client";
+import { Conversation } from "../../src/api/types";
+import { ConversationCard } from "../../src/components/ConversationCard";
+import { useThemedColors } from "../../src/hooks/use-themed-colors";
+import { COLORS } from "../../src/utils/constants";
 
 export default function ChatScreen() {
+  const themedColors = useThemedColors();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -25,7 +27,7 @@ export default function ChatScreen() {
       const data = await chatApi.getConversations();
       setConversations(data);
     } catch (error) {
-      console.error('Failed to load conversations:', getErrorMessage(error));
+      console.error("Failed to load conversations:", getErrorMessage(error));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -47,17 +49,30 @@ export default function ChatScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View
+        style={[
+          styles.centerContainer,
+          { backgroundColor: themedColors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={themedColors.tint} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <Text style={styles.headerSubtitle}>{conversations.length} conversations</Text>
+    <View
+      style={[styles.container, { backgroundColor: themedColors.background }]}
+    >
+      <View
+        style={[styles.header, { borderBottomColor: themedColors.icon + "20" }]}
+      >
+        <Text style={[styles.headerTitle, { color: themedColors.text }]}>
+          Messages
+        </Text>
+        <Text style={[styles.headerSubtitle, { color: themedColors.icon }]}>
+          {conversations.length} conversations
+        </Text>
       </View>
 
       <FlatList
@@ -70,7 +85,9 @@ export default function ChatScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No conversations yet</Text>
+            <Text style={[styles.emptyText, { color: themedColors.icon }]}>
+              No conversations yet
+            </Text>
           </View>
         }
       />
@@ -85,11 +102,11 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
     paddingTop: 60,
     borderBottomWidth: 1,
@@ -97,7 +114,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.text,
   },
   headerSubtitle: {
@@ -109,8 +126,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingTop: 60,
   },
   emptyText: {

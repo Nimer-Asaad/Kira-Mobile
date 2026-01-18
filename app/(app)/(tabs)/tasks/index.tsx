@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { getErrorMessage } from "../../../../src/api/client";
+import { personalTasksApi } from "../../../../src/api/personal";
 import { tasksApi } from "../../../../src/api/tasks";
 import { Task } from "../../../../src/api/types";
 import { useAuth } from "../../../../src/auth/AuthContext";
@@ -23,13 +24,37 @@ export default function TasksListScreen() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { user } = useAuth();
+  // Consider personal mode only when the user's role is explicitly 'personal'
+  const isPersonal = user?.role === "personal";
 
   const loadTasks = async () => {
     try {
       setError(null);
-      // Pass user role to get the correct endpoint
-      const data = await tasksApi.getMyTasks(user?.role);
-      setTasks(data);
+      // Determine if user is in personal workspace
+      // Use strict role check here to avoid treating admins as personal when
+      // workspaceMode/mode flags may be present for other reasons.
+      const isPersonal = user?.role === "personal";
+
+      if (isPersonal) {
+        // Load personal tasks and map to Task shape
+        const personal = await personalTasksApi.getAll();
+        const mapped: Task[] = (personal || []).map((p: any) => ({
+          _id: p._id,
+          title: p.title,
+          description: p.description || "",
+          status: p.completed ? "completed" : "pending",
+          priority: p.priority,
+          dueDate: p.dueDate,
+          checklist: p.checklist || [],
+          createdAt: p.createdAt || new Date().toISOString(),
+          updatedAt: p.updatedAt || new Date().toISOString(),
+        }));
+        setTasks(mapped);
+      } else {
+        // Pass user role to get the correct endpoint
+        const data = await tasksApi.getMyTasks(user?.role);
+        setTasks(data);
+      }
     } catch (err) {
       setError(getErrorMessage(err));
       console.error("Failed to load tasks:", getErrorMessage(err));
@@ -80,14 +105,47 @@ export default function TasksListScreen() {
           </Text>
           <Text style={styles.headerSubtitle}>{tasks.length} tasks</Text>
         </View>
-        {(user?.role === "admin" || user?.role === "hr") && (
-          <TouchableOpacity
-            style={styles.createButton}
-            onPress={() => router.push("/(app)/(tabs)/tasks/create" as any)}
-          >
-            <Text style={styles.createButtonText}>+ Create</Text>
-          </TouchableOpacity>
-        )}
+        {(() => {
+          // Show button for admin/hr (assign) and personal users (add)
+          if (user?.role === "admin" || user?.role === "hr" || isPersonal) {
+            return (
+              <>
+                <TouchableOpacity
+                  style={styles.createButton}
+                  onPress={() =>
+                    router.push("/(app)/(tabs)/tasks/create" as any)
+                  }
+                >
+                  <Text style={styles.createButtonText}>
+                    {isPersonal ? "Add Task" : "Assign Task"}
+                  </Text>
+                </TouchableOpacity>
+                {/* HR-only: View Trainees button */}
+                {user?.role === "hr" && (
+                  <TouchableOpacity
+                    style={[styles.createButton, { marginLeft: 8 }]}
+                    onPress={() =>
+                      router.push("/(app)/(tabs)/trainee/dashboard" as any)
+                    }
+                  >
+                    <Text style={styles.createButtonText}>Trainees</Text>
+                  </TouchableOpacity>
+                )}
+                {isPersonal && (
+                  <TouchableOpacity
+                    style={[styles.createButton, { marginLeft: 8 }]}
+                    onPress={() =>
+                      router.push("/(app)/(tabs)/personal/dashboard" as any)
+                    }
+                  >
+                    <Text style={styles.createButtonText}>Dashboard</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            );
+          }
+          return null;
+        })()}
       </View>
 
       <FlatList
