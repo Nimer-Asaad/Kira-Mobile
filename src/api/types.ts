@@ -4,7 +4,7 @@ export interface User {
   name?: string;
   fullName?: string;
   email: string;
-  role: "user" | "admin" | "hr" | "trainee";
+  role: "user" | "admin" | "hr" | "trainee" | "personal";
   avatar?: string;
   createdAt: string;
 }
@@ -16,9 +16,10 @@ export interface LoginCredentials {
 }
 
 export interface SignupData {
-  name: string;
+  fullName: string;
   email: string;
   password: string;
+  mode?: "company" | "personal";
 }
 
 export interface AuthResponse {
@@ -55,6 +56,7 @@ export interface PersonalTask {
   completed: boolean;
   priority?: "low" | "medium" | "high";
   dueDate?: string;
+  checklist?: ChecklistItem[];
   createdAt: string;
   updatedAt: string;
 }

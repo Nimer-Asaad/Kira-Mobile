@@ -8,6 +8,9 @@ export const STORAGE_KEYS = {
   AUTH_TOKEN: "auth_token",
   USER_DATA: "user_data",
   KIRA_MODE: "kira_mode",
+  THEME: "theme",
+  LANGUAGE: "language",
+  COLOR_THEME: "color_theme",
 };
 
 // Task Status

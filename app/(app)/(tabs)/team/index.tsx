@@ -9,14 +9,23 @@ import {
 } from "react-native";
 import { getErrorMessage } from "../../../../src/api/client";
 import { TeamMember, usersApi } from "../../../../src/api/users";
+import { useAuth } from "../../../../src/auth/AuthContext";
 import { COLORS } from "../../../../src/utils/constants";
 
 export default function TeamScreen() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
 
   const loadTeam = async () => {
+    // Only admin/hr should attempt to load team data
+    if (!(user?.role === "admin" || user?.role === "hr")) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
     try {
       const data = await usersApi.getTeamStats();
       setTeamMembers(data);
@@ -91,6 +100,23 @@ export default function TeamScreen() {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  // Unauthorized placeholder
+  if (!(user?.role === "admin" || user?.role === "hr")) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Team Members</Text>
+          <Text style={styles.headerSubtitle}>Not authorized</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            You are not authorized to view team data.
+          </Text>
+        </View>
       </View>
     );
   }

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,14 +12,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { inboxApi, Email, GmailStatus } from "../../../../src/api/inbox";
 import { getErrorMessage } from "../../../../src/api/client";
-import { COLORS, API_URL } from "../../../../src/utils/constants";
+import { Email, GmailStatus, inboxApi } from "../../../../src/api/inbox";
+import { useAuth } from "../../../../src/auth/AuthContext";
+import { API_URL, COLORS, STORAGE_KEYS } from "../../../../src/utils/constants";
 import { storage } from "../../../../src/utils/storage";
-import { STORAGE_KEYS } from "../../../../src/utils/constants";
 
 export default function InboxScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,8 +37,18 @@ export default function InboxScreen() {
 
   useEffect(() => {
     isMountedRef.current = true;
+    // If the current user is not HR, skip Gmail checks (personal/company gating)
+    // Admins are explicitly denied access to Inbox content
+    if (user?.role === "admin") {
+      setLoading(false);
+      return;
+    }
+    if (user?.role !== "hr") {
+      setLoading(false);
+      return;
+    }
     checkGmailStatus();
-    
+
     return () => {
       isMountedRef.current = false;
       // Cancel any ongoing requests
@@ -57,14 +68,17 @@ export default function InboxScreen() {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-      
-      searchTimeoutRef.current = setTimeout(() => {
-        if (isMountedRef.current) {
-          fetchEmails();
-        }
-      }, searchQuery ? 500 : 0); // 500ms delay for search, immediate for other changes
+
+      searchTimeoutRef.current = setTimeout(
+        () => {
+          if (isMountedRef.current) {
+            fetchEmails();
+          }
+        },
+        searchQuery ? 500 : 0
+      ); // 500ms delay for search, immediate for other changes
     }
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -75,16 +89,20 @@ export default function InboxScreen() {
   const checkGmailStatus = async () => {
     try {
       if (!isMountedRef.current) return;
-      
+
       setLoading(true);
       const status = await inboxApi.getStatus();
-      
+
       if (!isMountedRef.current) return;
-      
+
       setGmailStatus(status);
     } catch (error: any) {
       // Don't show alert if component is unmounted or request was aborted
-      if (!isMountedRef.current || error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+      if (
+        !isMountedRef.current ||
+        error.name === "AbortError" ||
+        error.code === "ERR_CANCELED"
+      ) {
         return;
       }
       console.error("Failed to check Gmail status:", getErrorMessage(error));
@@ -106,13 +124,13 @@ export default function InboxScreen() {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     // Create new abort controller for this request
     abortControllerRef.current = new AbortController();
-    
+
     try {
       if (!isMountedRef.current) return;
-      
+
       setLoading(true);
       const params: any = {
         limit,
@@ -122,26 +140,31 @@ export default function InboxScreen() {
       if (label !== "ALL") params.labelIds = label;
 
       const response = await inboxApi.searchEmails(params);
-      
+
       if (!isMountedRef.current) return;
-      
+
       setEmails(response.emails || []);
       setTotalEmails(response.count || 0);
     } catch (error: any) {
       // Don't show alert if component is unmounted or request was aborted
-      if (!isMountedRef.current || error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+      if (
+        !isMountedRef.current ||
+        error.name === "AbortError" ||
+        error.code === "ERR_CANCELED"
+      ) {
         return;
       }
-      
+
       // Don't show alert for network errors (likely navigation-related)
       const errorMessage = getErrorMessage(error);
-      const isNetworkError = errorMessage.toLowerCase().includes('network') || 
-                            errorMessage.toLowerCase().includes('timeout') ||
-                            error.code === 'ERR_NETWORK' ||
-                            error.message === 'Network Error';
-      
+      const isNetworkError =
+        errorMessage.toLowerCase().includes("network") ||
+        errorMessage.toLowerCase().includes("timeout") ||
+        error.code === "ERR_NETWORK" ||
+        error.message === "Network Error";
+
       console.error("Failed to fetch emails:", errorMessage);
-      
+
       // Only show alert for non-network errors and if component is still mounted
       if (isMountedRef.current && !isNetworkError) {
         Alert.alert("Error", errorMessage);
@@ -164,7 +187,7 @@ export default function InboxScreen() {
 
       // Get the auth URL from backend
       const authUrl = inboxApi.getAuthUrl(token, API_URL);
-      
+
       // Open in browser/WebView
       const canOpen = await Linking.canOpenURL(authUrl);
       if (canOpen) {
@@ -213,7 +236,8 @@ export default function InboxScreen() {
     const formattedDate = date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-      year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+      year:
+        date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
     });
 
     return (
@@ -251,6 +275,17 @@ export default function InboxScreen() {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  // Deny access to admin users explicitly
+  if (user?.role === "admin") {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={{ fontSize: 18, color: COLORS.text }}>
+          You can't see this
+        </Text>
       </View>
     );
   }
@@ -333,7 +368,10 @@ export default function InboxScreen() {
 
       <View style={styles.labelContainer}>
         <TouchableOpacity
-          style={[styles.labelButton, label === "INBOX" && styles.labelButtonActive]}
+          style={[
+            styles.labelButton,
+            label === "INBOX" && styles.labelButtonActive,
+          ]}
           onPress={() => setLabel("INBOX")}
         >
           <Text
@@ -346,7 +384,10 @@ export default function InboxScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.labelButton, label === "ALL" && styles.labelButtonActive]}
+          style={[
+            styles.labelButton,
+            label === "ALL" && styles.labelButtonActive,
+          ]}
           onPress={() => setLabel("ALL")}
         >
           <Text

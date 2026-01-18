@@ -10,6 +10,10 @@ import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/src/auth/AuthContext";
 import { ModeProvider, useMode } from "@/src/context/ModeContext";
+import {
+  ThemeProvider as AppThemeProvider,
+  useTheme,
+} from "@/src/context/ThemeContext";
 import { useColorScheme } from "@/src/hooks";
 import { COLORS } from "@/src/theme";
 
@@ -21,9 +25,10 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { isLoading, isAuthenticated } = useAuth();
   const { mode, isLoading: modeLoading } = useMode();
+  const { isLoading: themeLoading } = useTheme();
 
   // Show loading spinner while bootstrapping
-  if (isLoading || modeLoading) {
+  if (isLoading || modeLoading || themeLoading) {
     return (
       <View
         style={{
@@ -78,7 +83,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ModeProvider>
-        <RootLayoutNav />
+        <AppThemeProvider>
+          <RootLayoutNav />
+        </AppThemeProvider>
       </ModeProvider>
     </AuthProvider>
   );

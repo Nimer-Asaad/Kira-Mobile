@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { getErrorMessage } from "../../../../src/api/client";
+import { personalTasksApi } from "../../../../src/api/personal";
 import { tasksApi } from "../../../../src/api/tasks";
 import { User } from "../../../../src/api/types";
 import { usersApi } from "../../../../src/api/users";
@@ -77,16 +78,35 @@ export default function CreateTaskScreen() {
 
     setLoading(true);
     try {
-      await tasksApi.createTask({
-        title: formData.title,
-        description: formData.description,
-        priority: formData.priority,
-        dueDate: formData.dueDate,
-        assignedTo: selectedUserId || undefined,
-        checklist: checklist.length > 0 ? checklist : undefined,
-        requiredAssigneesCount: parseInt(formData.requiredAssigneesCount) || 1,
-        ownerType: "employee",
-      });
+      const isPersonal = Boolean(
+        (user as any)?.workspaceMode === "personal" ||
+          (user as any)?.mode === "personal" ||
+          (user as any)?.role === "personal"
+      );
+
+      if (isPersonal) {
+        // Create a personal task
+        await personalTasksApi.create({
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          dueDate: formData.dueDate,
+          checklist: checklist.map((c) => ({ text: c.text, done: c.done })),
+        } as any);
+      } else {
+        // Admin/HR create via tasks API
+        await tasksApi.createTask({
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+          dueDate: formData.dueDate,
+          assignedTo: selectedUserId || undefined,
+          checklist: checklist.length > 0 ? checklist : undefined,
+          requiredAssigneesCount:
+            parseInt(formData.requiredAssigneesCount) || 1,
+          ownerType: "employee",
+        });
+      }
 
       Alert.alert("Success", "Task created successfully!", [
         { text: "OK", onPress: () => router.back() },

@@ -82,4 +82,9 @@ export const tasksApi = {
     );
     return response.data;
   },
+
+  // Delete task (admin only)
+  async deleteTask(id: string): Promise<void> {
+    await apiClient.delete(`${API_PATHS.TASKS.BY_ID(id)}`);
+  },
 };
