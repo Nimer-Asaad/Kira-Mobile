@@ -17,13 +17,17 @@ export default function ChatListScreen() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadConversations = async () => {
     try {
+      setErrorMessage(null);
       const data = await chatApi.getConversations();
       setConversations(data);
     } catch (error) {
-      console.error('Failed to load conversations:', getErrorMessage(error));
+      const msg = getErrorMessage(error);
+      setErrorMessage(msg);
+      console.error('Failed to load conversations:', msg);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -54,9 +58,18 @@ export default function ChatListScreen() {
         <Text style={styles.headerSubtitle}>{conversations.length} conversations</Text>
       </View>
 
+      {!!errorMessage && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>
+            Failed to load conversations: {errorMessage}
+          </Text>
+          <Text style={styles.errorHint}>Pull down to retry.</Text>
+        </View>
+      )}
+
       <FlatList
         data={conversations}
-        keyExtractor={(item) => item.user._id}
+        keyExtractor={(item, index) => item?.user?._id ?? String(index)}
         renderItem={({ item }) => <ConversationCard conversation={item} />}
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -101,6 +114,23 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
+  },
+  errorBanner: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  errorText: {
+    color: '#b00020',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  errorHint: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    marginTop: 4,
   },
   emptyContainer: {
     alignItems: 'center',

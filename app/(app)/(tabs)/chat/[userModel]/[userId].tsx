@@ -34,28 +34,17 @@ export default function ChatConversationScreen() {
     null
   );
 
-  const loadMessages = async () => {
-    if (!userId || !userModel) return;
+  const markAsReadForMessages = async (msgs: Message[]) => {
+    if (!currentUser?._id) return;
 
     try {
-      const data = await chatApi.getConversation(userModel, userId);
-      setMessages(data.reverse()); // Reverse to show oldest at top
-    } catch (error) {
-      console.error("Failed to load messages:", getErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const markAsRead = async () => {
-    if (!userId || !userModel || !currentUser) return;
-
-    try {
-      // Get unread messages from the other user
-      const unreadMessageIds = messages
+      const unreadMessageIds = msgs
         .filter(
           (msg) =>
-            msg.receiver._id === currentUser._id && !msg.isRead && !msg.read
+            msg?.receiver?._id === currentUser._id &&
+            // backend uses `isRead`; mobile types also have optional `read`
+            msg.isRead !== true &&
+            msg.read !== true
         )
         .map((msg) => msg._id);
 
@@ -67,14 +56,27 @@ export default function ChatConversationScreen() {
     }
   };
 
+  const loadMessages = async () => {
+    if (!userId || !userModel) return;
+
+    try {
+      const data = await chatApi.getConversation(userModel, userId);
+      // Backend already sorts by createdAt ascending (oldest -> newest)
+      setMessages(data);
+      // Mark unread partner->me messages as read once we have them
+      await markAsReadForMessages(data);
+    } catch (error) {
+      console.error("Failed to load messages:", getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!userId || !userModel) return;
 
     // Load messages initially
     loadMessages();
-
-    // Mark as read when opening conversation
-    markAsRead();
 
     // Setup polling to reload messages every 5 seconds
     pollingIntervalRef.current = setInterval(() => {
