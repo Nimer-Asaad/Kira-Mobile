@@ -1,7 +1,7 @@
 // API Configuration
-export const API_URL = __DEV__
-  ? "http://10.0.2.2:8000/api" // Development
-  : "https://your-production-api.com/api"; // Production
+export const API_URL = process.env.EXPO_PUBLIC_API_BASE_URL || (__DEV__
+  ? "http://10.0.2.2:8000/api" // Fallback Development
+  : "https://your-production-api.com/api"); // Production
 
 // Storage Keys
 export const STORAGE_KEYS = {
